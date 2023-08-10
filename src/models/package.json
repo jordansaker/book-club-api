@@ -1,0 +1,7 @@
+{
+  "name": "@src/models",
+  "version": "1.0.0",
+  "description": "Models package",
+  "main": "index.js",
+  "type": "module"
+}

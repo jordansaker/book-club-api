@@ -1,0 +1,10 @@
+{
+  "name": "@src/routes",
+  "version": "1.0.0",
+  "description": "API routes",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "@src/models": "file:../models"
+  }
+}
