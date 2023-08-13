@@ -10,7 +10,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "npx eslint '**/*js'",
     "fix": "npx eslint '**/*js' --fix",
-    "seed": "node ./db/seed.js"
+    "seed": "node ./db/seed.js",
+    "salt": "node bcrypt_salt.js"
   },
   "keywords": [],
   "author": "Jordan Saker",

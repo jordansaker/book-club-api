@@ -1,6 +1,7 @@
 import { BookModel, ReviewModel, MemberModel } from "@src/models"
 import { dbConnect, dbClose } from "db"
 import bcrypt from 'bcrypt'
+import saltToAdd from "../bcrypt_salt.js"
 
 dbConnect()
 
@@ -31,10 +32,6 @@ await BookModel.deleteMany()
 console.log('Deleted books')
 const booksInserted = await BookModel.insertMany(books)
 console.log('Added books')
-
-const saltRounds = 10
-
-const saltToAdd = await bcrypt.genSalt(saltRounds)
 
 const members = [
   {

@@ -1,13 +1,13 @@
 import { Router } from "express"
-import { BookModel } from "@src/models"
+import { BookModel, MemberModel } from "@src/models"
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import bcrypt from 'bcrypt'
+import saltToAdd from "../../bcrypt_salt.js"
 
 dotenv.config()
 
 const router = Router()
-const saltRounds = 10
 
 function generateJWT(userDetailsObject) {
   return jwt.sign(userDetailsObject, process.env.JWT_SECRET, { expiresIn: '7d' })
@@ -37,9 +37,12 @@ const validateBasicAuth = (req, res, next) => {
 
 const hashAndSaltAuth = async (req, res, next) => {
   console.log('Object of auth data is: ' + JSON.stringify(req.userAuthDetails))
-  let saltToAdd = await bcrypt.genSalt(saltRounds)
-  let hashedAndSaltedOassword = await bcrypt.hash(req.userAuthDetails.password, saltToAdd)
-  console.log(typeof hashedAndSaltedOassword)
+  let hashedAndSaltedPassword = await bcrypt.hash(req.userAuthDetails.password, saltToAdd)
+  let user = await MemberModel.findOne( {username:  'jscairns'} )
+  console.log(user)
+  let passwordsMatch = await bcrypt.compare( user.password, hashedAndSaltedPassword)
+  console.log(saltToAdd)
+  console.log(passwordsMatch)
   next()
 }
 
