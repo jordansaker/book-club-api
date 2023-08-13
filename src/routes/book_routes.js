@@ -1,10 +1,55 @@
 import { Router } from "express"
 import { BookModel } from "@src/models"
+import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'
+import bcrypt from 'bcrypt'
+
+dotenv.config()
 
 const router = Router()
+const saltRounds = 10
 
-router.get('/', async (req, res) => {
-  res.send(await BookModel.find())
+function generateJWT(userDetailsObject) {
+  return jwt.sign(userDetailsObject, process.env.JWT_SECRET, { expiresIn: '7d' })
+}
+
+
+const validateBasicAuth = (req, res, next) => {
+  let authHeader = req.headers['authorization'] ?? null
+
+  if (authHeader == null) {
+    throw new Error('No auth data detected on a request to protected route')
+  }
+
+  authHeader = authHeader.startsWith('Basic ') && authHeader.substring(5).trim()
+
+  console.log('Provided base64 auth string is: ' + authHeader)
+
+  let decodedAuth = Buffer.from(authHeader, 'base64').toString('ascii')
+  let splitDecodedAuth = decodedAuth.split(':')
+  let decodedAuthObj = {
+    username: splitDecodedAuth[0],
+    password: splitDecodedAuth[1]
+  }
+  req.userAuthDetails = decodedAuthObj
+  next()
+}
+
+const hashAndSaltAuth = async (req, res, next) => {
+  console.log('Object of auth data is: ' + JSON.stringify(req.userAuthDetails))
+  let saltToAdd = await bcrypt.genSalt(saltRounds)
+  let hashedAndSaltedOassword = await bcrypt.hash(req.userAuthDetails.password, saltToAdd)
+  console.log(typeof hashedAndSaltedOassword)
+  next()
+}
+
+
+router.get('/', validateBasicAuth, hashAndSaltAuth, async (req, res) => {
+  const userJWT = generateJWT(req.userAuthDetails)
+  res.send({
+    books: await BookModel.find(),
+    token: userJWT
+  })
 })
 
 router.get('/:id', async (req, res) => {

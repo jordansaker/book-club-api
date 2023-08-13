@@ -1,5 +1,6 @@
 import { BookModel, ReviewModel, MemberModel } from "@src/models"
 import { dbConnect, dbClose } from "db"
+import bcrypt from 'bcrypt'
 
 dbConnect()
 
@@ -31,18 +32,28 @@ console.log('Deleted books')
 const booksInserted = await BookModel.insertMany(books)
 console.log('Added books')
 
+const saltRounds = 10
+
+const saltToAdd = await bcrypt.genSalt(saltRounds)
+
 const members = [
   {
     name: "Josh Phillips",
-    favouriteBook: booksInserted[3] 
+    favouriteBook: booksInserted[3],
+    username: 'jpcairns',
+    password: await bcrypt.hash('SicBoiPass', saltToAdd)
   },
   {
     name: "Jordan Saker",
-    favouriteBook: booksInserted[2]
+    favouriteBook: booksInserted[2],
+    username: 'jscairns',
+    password: await bcrypt.hash('SicBoiPassTwo', saltToAdd)
   },
   {
     name: "Luke Donnet",
-    favouriteBook: booksInserted[0]
+    favouriteBook: booksInserted[0],
+    username: 'ldcairns',
+    password: await bcrypt.hash('SicBoiPassThree', saltToAdd)
   }
 ]
 
