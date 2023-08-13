@@ -3,14 +3,13 @@ import { BookModel, MemberModel, SaltModel } from "@src/models"
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import bcrypt from 'bcrypt'
-import saltToAdd from "../../bcrypt_salt.js"
 
 dotenv.config()
 
 const router = Router()
 
 function generateJWT(userDetailsObject) {
-  return jwt.sign(userDetailsObject, process.env.JWT_SECRET, { expiresIn: '7d' })
+  return jwt.sign(userDetailsObject, process.env.JWT_SECRET, { expiresIn: '1h' })
 }
 
 
@@ -48,7 +47,7 @@ const verifyAuth = async (req, res, next) => {
     // set token in cookie
     // https://ironeko.com/posts/how-to-store-access-tokens-localstorage-cookies-or-httponly
     res.setHeader('Set-Cookie', [
-      `accessToken=${req.userJWT}; HttpOnly; Max-Age=${60000 * 15};`,
+      `accessToken=${req.userJWT}; HttpOnly; Max-Age=${1800};`,
     ])    
     next()
   }
