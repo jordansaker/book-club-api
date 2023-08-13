@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { BookModel, MemberModel } from "@src/models"
+import { BookModel, MemberModel, SaltModel } from "@src/models"
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import bcrypt from 'bcrypt'
@@ -23,8 +23,6 @@ const validateBasicAuth = (req, res, next) => {
 
   authHeader = authHeader.startsWith('Basic ') && authHeader.substring(5).trim()
 
-  console.log('Provided base64 auth string is: ' + authHeader)
-
   let decodedAuth = Buffer.from(authHeader, 'base64').toString('ascii')
   let splitDecodedAuth = decodedAuth.split(':')
   let decodedAuthObj = {
@@ -35,23 +33,32 @@ const validateBasicAuth = (req, res, next) => {
   next()
 }
 
-const hashAndSaltAuth = async (req, res, next) => {
-  console.log('Object of auth data is: ' + JSON.stringify(req.userAuthDetails))
-  let hashedAndSaltedPassword = await bcrypt.hash(req.userAuthDetails.password, saltToAdd)
-  let user = await MemberModel.findOne( {username:  'jscairns'} )
-  console.log(user)
-  let passwordsMatch = await bcrypt.compare( user.password, hashedAndSaltedPassword)
-  console.log(saltToAdd)
-  console.log(passwordsMatch)
-  next()
+const verifyAuth = async (req, res, next) => {
+  const user = await MemberModel.findOne( {username:  req.userAuthDetails.username} )
+  const passwordsMatch = await bcrypt.compare( req.userAuthDetails.password, user.password)
+  if (!passwordsMatch) {
+    res.send({ error: 'Invalid email or password' })
+  }
+  else {
+    const decodedAuthObjExPassword = {
+      username: req.userAuthDetails.username
+    }
+    req.userAuthDetails = decodedAuthObjExPassword
+    req.userJWT = generateJWT(req.userAuthDetails)
+    // set token in cookie
+    // https://ironeko.com/posts/how-to-store-access-tokens-localstorage-cookies-or-httponly
+    res.setHeader('Set-Cookie', [
+      `accessToken=${req.userJWT}; HttpOnly; Max-Age=${60000 * 15};`,
+    ])    
+    next()
+  }
 }
 
 
-router.get('/', validateBasicAuth, hashAndSaltAuth, async (req, res) => {
-  const userJWT = generateJWT(req.userAuthDetails)
+router.get('/', validateBasicAuth, verifyAuth, async (req, res) => {
   res.send({
     books: await BookModel.find(),
-    token: userJWT
+    token: req.userJWT
   })
 })
 

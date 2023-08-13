@@ -1,9 +1,14 @@
-import { BookModel, ReviewModel, MemberModel } from "@src/models"
+import { BookModel, ReviewModel, MemberModel, SaltModel } from "@src/models"
 import { dbConnect, dbClose } from "db"
 import bcrypt from 'bcrypt'
 import saltToAdd from "../bcrypt_salt.js"
 
 dbConnect()
+
+await SaltModel.deleteMany()
+console.log('Salt deleted')
+const saltInserted = await SaltModel.create({ salt: saltToAdd })
+console.log('Salt added')
 
 const books = [
   {
@@ -38,19 +43,19 @@ const members = [
     name: "Josh Phillips",
     favouriteBook: booksInserted[3],
     username: 'jpcairns',
-    password: await bcrypt.hash('SicBoiPass', saltToAdd)
+    password: await bcrypt.hash('SicBoiPass', saltInserted.salt)
   },
   {
     name: "Jordan Saker",
     favouriteBook: booksInserted[2],
     username: 'jscairns',
-    password: await bcrypt.hash('SicBoiPassTwo', saltToAdd)
+    password: await bcrypt.hash('SicBoiPassTwo', saltInserted.salt)
   },
   {
     name: "Luke Donnet",
     favouriteBook: booksInserted[0],
     username: 'ldcairns',
-    password: await bcrypt.hash('SicBoiPassThree', saltToAdd)
+    password: await bcrypt.hash('SicBoiPassThree', saltInserted.salt)
   }
 ]
 

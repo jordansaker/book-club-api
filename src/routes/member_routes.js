@@ -4,7 +4,10 @@ import { Router } from "express"
 const router = Router()
 
 router.get('/', async (req, res) => {
-  res.send(await MemberModel.find().populate('favouriteBook'))
+  res.send({
+    members: await MemberModel.find().populate('favouriteBook'),
+    decodedJWT: req.decodedJWT
+  })
 })
 
 export default router
