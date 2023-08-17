@@ -1,8 +1,11 @@
 import mongoose from 'mongoose'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 async function dbConnect () {
   try {
-    mongoose.connect('mongodb://127.0.0.1:27017/book_club')
+    mongoose.connect(process.env.LOCAL_DB_URL)
     console.log('Mongoose connected')
   } catch (error) {
     console.log({ error: error.message })
