@@ -1,12 +1,16 @@
 import { Router } from "express"
-import { BookModel, MemberModel, SaltModel } from "@src/models"
+import { BookModel, MemberModel} from "@src/models"
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 import bcrypt from 'bcrypt'
+import fileUpload from "express-fileupload"
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 
 dotenv.config()
 
 const router = Router()
+
+router.use(fileUpload())
 
 function generateJWT(userDetailsObject) {
   return jwt.sign(userDetailsObject, process.env.JWT_SECRET, { expiresIn: '1h' })
@@ -53,13 +57,12 @@ const verifyAuth = async (req, res, next) => {
   }
 }
 
-
-router.get('/', validateBasicAuth, verifyAuth, async (req, res) => {
-  res.send({
-    books: await BookModel.find(),
-    token: req.userJWT
-  })
-})
+// router.get('/', validateBasicAuth, verifyAuth, async (req, res) => {
+//   res.send({
+//     books: await BookModel.find(),
+//     token: req.userJWT
+//   })
+// })
 
 router.get('/:id', async (req, res) => {
   try {
@@ -73,8 +76,38 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const addedBook = await BookModel.create(req.body)
-    res.status(201).send(addedBook)
+    // save this in database with vehicle to use to retrive img .png
+    const url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.body.asset_id}`
+    const client = new S3Client({region: process.env.AWS_REGION})
+    // Binary data base64
+    const uploadedImg = Buffer.from(req.files.image.data, 'binary')
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: `${req.body.asset_id}.png`,  
+      Body: uploadedImg,
+      ContentType: 'image/png'
+
+    })
+  
+    await client.send(command)
+    // send url back with new details
+    res.send({URL: url + `.png` })
+    // res.send(`<img src="${url}.png"/>`)
+    // const addedBook = await BookModel.create(req.body)
+    // res.status(201).send(addedBook)
+  }
+  catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+})
+
+
+
+router.get('/', async (req, res) => {
+  try {
+    // const addedBook = await BookModel.create(req.body)
+    // res.status(201).send(addedBook)
   }
   catch (error) {
     res.status(500).send({ error: error.message })
